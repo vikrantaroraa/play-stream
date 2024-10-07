@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 const TextReaderWithSynchronizedVoice = () => {
   const [text, setText] = useState(""); // Text input or from file
@@ -44,22 +44,24 @@ const TextReaderWithSynchronizedVoice = () => {
   };
 
   // Starts reading aloud and highlighting words
-  const startReading = () => {
+  const startReading = (fromIndex = 0) => {
     if (text) {
       const wordArray = splitTextIntoWords(text);
       setWords(wordArray);
-      setCurrentWordIndex(0);
+      setCurrentWordIndex(fromIndex);
       setIsSpeaking(true);
       setIsPaused(false);
 
       // Create and configure speech synthesis utterance
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(
+        text.slice(wordArray[fromIndex].start)
+      );
       utterance.rate = readingSpeed; // Set speech rate
 
       // Synchronize the spoken word with the highlighted word
       utterance.onboundary = (event) => {
         if (event.name === "word") {
-          const charIndex = event.charIndex;
+          const charIndex = event.charIndex + wordArray[fromIndex].start;
           const currentIndex = wordArray.findIndex(
             (wordObj) => wordObj.start >= charIndex
           );
@@ -105,6 +107,16 @@ const TextReaderWithSynchronizedVoice = () => {
     setCurrentWordIndex(-1);
     setIsPaused(false);
   };
+
+  // Restart speech when reading speed changes
+  useEffect(() => {
+    if (isSpeaking && utteranceRef.current) {
+      const fromIndex = currentWordIndex;
+      speechSynthesisRef.current.cancel(); // Stop current speech
+      startReading(fromIndex); // Restart from the current word
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readingSpeed]);
 
   // Function to highlight the current word
   const getHighlightedText = () => {
@@ -155,7 +167,7 @@ const TextReaderWithSynchronizedVoice = () => {
       <br />
 
       {/* Control Buttons */}
-      <button onClick={startReading} disabled={isSpeaking || isPaused}>
+      <button onClick={() => startReading()} disabled={isSpeaking || isPaused}>
         Start Reading
       </button>
       <button onClick={pauseReading} disabled={!isSpeaking || isPaused}>
