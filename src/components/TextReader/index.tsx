@@ -1,15 +1,39 @@
 import React, { useState, useRef, useEffect } from "react";
 
-const TextReaderWithSynchronizedVoice = () => {
+const TextReaderWithMultipleVoices = () => {
   const [text, setText] = useState(""); // Text input or from file
   const [words, setWords] = useState([]); // Array of words with positions
   const [currentWordIndex, setCurrentWordIndex] = useState(-1); // Index of the word being highlighted
   const [isSpeaking, setIsSpeaking] = useState(false); // Is the app speaking the text
   const [isPaused, setIsPaused] = useState(false); // Is the speech paused
   const [readingSpeed, setReadingSpeed] = useState(1); // Speech speed (default 1x)
+  const [voices, setVoices] = useState([]); // Available voices
+  const [selectedVoice, setSelectedVoice] = useState(null); // Selected voice
 
   const speechSynthesisRef = useRef(window.speechSynthesis); // Reference to speech synthesis
   const utteranceRef = useRef(null); // Reference to the speech utterance
+
+  // Fetch voices once the component mounts
+  useEffect(() => {
+    const loadVoices = () => {
+      const availableVoices = speechSynthesisRef.current.getVoices();
+      const filteredVoices = availableVoices.filter(
+        (voice) => voice.lang === "en-US" && voice.localService === true
+      );
+      setVoices(filteredVoices);
+      // Set default voice as the first one
+      if (availableVoices.length > 0) {
+        setSelectedVoice(availableVoices[0]);
+      }
+    };
+
+    loadVoices();
+
+    // Some browsers may not have voices loaded immediately
+    if (speechSynthesisRef.current.onvoiceschanged !== undefined) {
+      speechSynthesisRef.current.onvoiceschanged = loadVoices;
+    }
+  }, []);
 
   // Handles text input
   const handleTextInput = (e) => {
@@ -57,6 +81,7 @@ const TextReaderWithSynchronizedVoice = () => {
         text.slice(wordArray[fromIndex].start)
       );
       utterance.rate = readingSpeed; // Set speech rate
+      utterance.voice = selectedVoice; // Set selected voice
 
       // Synchronize the spoken word with the highlighted word
       utterance.onboundary = (event) => {
@@ -108,7 +133,7 @@ const TextReaderWithSynchronizedVoice = () => {
     setIsPaused(false);
   };
 
-  // Restart speech when reading speed changes
+  // Restart speech when reading speed or voice changes
   useEffect(() => {
     if (isSpeaking && utteranceRef.current) {
       const fromIndex = currentWordIndex;
@@ -116,27 +141,37 @@ const TextReaderWithSynchronizedVoice = () => {
       startReading(fromIndex); // Restart from the current word
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readingSpeed]);
+  }, [readingSpeed, selectedVoice]);
 
-  // Function to highlight the current word
+  // Function to highlight the current word without highlighting the space
   const getHighlightedText = () => {
     return words.map((wordObj, index) => (
-      <span
-        key={index}
-        style={{
-          backgroundColor:
-            index === currentWordIndex ? "#b2bdfd" : "transparent",
-        }}
-      >
-        {wordObj.word}{" "}
-      </span>
+      <React.Fragment key={index}>
+        <span
+          style={{
+            backgroundColor:
+              index === currentWordIndex ? "#b2bdfd" : "transparent",
+            padding: "4px", // Add padding to highlighted word
+            borderRadius: index === currentWordIndex ? "4px" : "0", // Smooth edges for highlighted word
+          }}
+        >
+          {wordObj.word}
+        </span>
+        <span> </span>{" "}
+        {/* This renders the space after the word without highlight */}
+      </React.Fragment>
     ));
   };
 
+  useEffect(() => {
+    // Cleanup function to stop speech when component is unmounted or page is refreshed
+    return () => {
+      speechSynthesisRef.current.cancel(); // Cancel any ongoing speech
+    };
+  }, []); // Empty dependency array to ensure this runs only when the component is mounted/unmounted
+
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Text Reader with Voice</h2>
-
       {/* Text Input Area */}
       <textarea
         rows={5}
@@ -166,6 +201,25 @@ const TextReaderWithSynchronizedVoice = () => {
       />
       <br />
 
+      {/* Voice Selection */}
+      <label htmlFor="voiceSelect">Choose Voice:</label>
+      <select
+        id="voiceSelect"
+        value={selectedVoice ? selectedVoice.name : ""}
+        onChange={(e) =>
+          setSelectedVoice(
+            voices.find((voice) => voice.name === e.target.value)
+          )
+        }
+      >
+        {voices.map((voice, index) => (
+          <option key={index} value={voice.name}>
+            {voice.name} ({voice.lang})
+          </option>
+        ))}
+      </select>
+      <br />
+
       {/* Control Buttons */}
       <button onClick={() => startReading()} disabled={isSpeaking || isPaused}>
         Start Reading
@@ -186,4 +240,4 @@ const TextReaderWithSynchronizedVoice = () => {
   );
 };
 
-export default TextReaderWithSynchronizedVoice;
+export default TextReaderWithMultipleVoices;
