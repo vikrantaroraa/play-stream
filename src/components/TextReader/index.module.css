@@ -1,19 +1,25 @@
 .main-container {
-  /* height: 100vh; */
   width: 100%;
-  /* border: 1px solid red; */
   display: flex;
   flex-direction: column;
 }
 
 .header {
   height: 48px;
-  /* background-color: lightblue; */
   display: flex;
   justify-content: space-between;
   padding: 0 16px;
-  /* box-shadow: 0 4px 12px 0 rgb(0 0 0 / 5%); */
   border-bottom: 1px solid #eae8df;
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 99999;
+}
+
+.logo-and-app-name {
+  display: flex;
+  gap: 12px;
+  text-align: center;
 }
 
 .logo {
@@ -23,6 +29,14 @@
 .logo img {
   height: 100%;
   width: 100%;
+}
+
+.app-name {
+  font-size: 22px;
+  margin: auto;
+  text-decoration: underline;
+  font-style: oblique;
+  font-weight: 600;
 }
 
 .app-container {

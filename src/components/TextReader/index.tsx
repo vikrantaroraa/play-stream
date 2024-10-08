@@ -187,8 +187,11 @@ const TextReaderWithMultipleVoices = () => {
   return (
     <div className={styles["main-container"]}>
       <div className={styles["header"]}>
-        <div className={styles["logo"]}>
-          <img src={playStreamLogo} alt="play-stream-logo" />
+        <div className={styles["logo-and-app-name"]}>
+          <div className={styles["logo"]}>
+            <img src={playStreamLogo} alt="play-stream-logo" />
+          </div>
+          <span className={styles["app-name"]}>Play Stream</span>
         </div>
         {/* <div className={styles["links"]}></div> */}
       </div>
