@@ -1,0 +1,103 @@
+.main-container {
+  /* height: 100vh; */
+  width: 100%;
+  /* border: 1px solid red; */
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  height: 48px;
+  /* background-color: lightblue; */
+  display: flex;
+  justify-content: space-between;
+  padding: 0 16px;
+  /* box-shadow: 0 4px 12px 0 rgb(0 0 0 / 5%); */
+  border-bottom: 1px solid #eae8df;
+}
+
+.logo {
+  height: 100%;
+}
+
+.logo img {
+  height: 100%;
+  width: 100%;
+}
+
+.app-container {
+  /* height: 92%; */
+  height: auto;
+  /* border: 3px dotted purple; */
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.text-input-and-controls-container {
+  width: 100%;
+  height: auto;
+  /* border: 2px dotted orangered; */
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+  /* gap: 12px; */
+}
+
+.upload-button {
+  margin-bottom: 16px;
+}
+
+textarea {
+  height: 125px;
+  border-radius: calc(0.5rem - 2px);
+  outline-width: 1px;
+  resize: vertical;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+}
+
+.select-label {
+  margin-bottom: 8px;
+}
+
+select {
+  height: 40px;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+}
+
+.upload-file-input {
+  display: none;
+}
+
+input[type="range"] {
+  accent-color: #111827;
+  margin-bottom: 16px;
+}
+
+.response-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: scroll;
+  font-size: 18px;
+  line-height: 1.6;
+  padding: 16px;
+  background-color: #fff;
+}
+
+/* This wrapper div is used specifically to show the border because if we use border-radius and overflow:scroll
+ on the same div then top right and bottom right borders gets cut and doesn't appear properly  */
+.wrapper {
+  border: 1px solid #111827;
+  overflow: hidden;
+  border-radius: 6px;
+  width: 100%;
+  height: 500px;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 10px;
+}

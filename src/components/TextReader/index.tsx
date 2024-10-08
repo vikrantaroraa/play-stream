@@ -1,4 +1,17 @@
+// @ts-nocheck
+
 import React, { useState, useRef, useEffect } from "react";
+import styles from "./index.module.css";
+import playStreamLogo from "src/assets/images/play-stream-logo-3.png";
+import {
+  FileText,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  CircleStop,
+} from "lucide-react";
+import IconButton from "src/components/IconButton";
 
 const TextReaderWithMultipleVoices = () => {
   const [text, setText] = useState(""); // Text input or from file
@@ -12,6 +25,7 @@ const TextReaderWithMultipleVoices = () => {
 
   const speechSynthesisRef = useRef(window.speechSynthesis); // Reference to speech synthesis
   const utteranceRef = useRef(null); // Reference to the speech utterance
+  const fileInputRef = useRef(null);
 
   // Fetch voices once the component mounts
   useEffect(() => {
@@ -171,70 +185,120 @@ const TextReaderWithMultipleVoices = () => {
   }, []); // Empty dependency array to ensure this runs only when the component is mounted/unmounted
 
   return (
-    <div style={{ padding: "20px" }}>
-      {/* Text Input Area */}
-      <textarea
-        rows={5}
-        cols={50}
-        value={text}
-        onChange={handleTextInput}
-        placeholder="Enter your text here."
-      />
-      <br />
+    <div className={styles["main-container"]}>
+      <div className={styles["header"]}>
+        <div className={styles["logo"]}>
+          <img src={playStreamLogo} alt="play-stream-logo" />
+        </div>
+        {/* <div className={styles["links"]}></div> */}
+      </div>
+      <div className={styles["app-container"]}>
+        <div className={styles["text-input-and-controls-container"]}>
+          <div className={styles["upload-button"]}>
+            {/* File Upload Input */}
+            <input
+              type="file"
+              accept=".txt"
+              onChange={handleFileUpload}
+              ref={fileInputRef}
+              className={styles["upload-file-input"]}
+            />
+            <IconButton onClick={() => fileInputRef.current.click()}>
+              {/* <FileText className="mr-2 h-4 w-4" /> */}
+              <FileText color="white" size={16} />
+              Upload File
+            </IconButton>
+          </div>
 
-      {/* File Upload Input */}
-      <input type="file" accept=".txt" onChange={handleFileUpload} />
-      <br />
+          {/* Text Input Area */}
+          <textarea
+            // rows={5}
+            // cols={50}
+            value={text}
+            onChange={handleTextInput}
+            placeholder="Or paste your text here..."
+          />
 
-      {/* Reading Speed Control */}
-      <label htmlFor="speedControl">
-        Speech Speed: {readingSpeed.toFixed(1)}x
-      </label>
-      <input
-        type="range"
-        id="speedControl"
-        min="0.5"
-        max="2"
-        step="0.1"
-        value={readingSpeed}
-        onChange={(e) => setReadingSpeed(Number(e.target.value))}
-      />
-      <br />
+          {/* Voice Selection */}
+          <label htmlFor="voiceSelect" className={styles["select-label"]}>
+            Select Voice:
+          </label>
+          <select
+            id="voiceSelect"
+            value={selectedVoice ? selectedVoice.name : ""}
+            onChange={(e) =>
+              setSelectedVoice(
+                voices.find((voice) => voice.name === e.target.value)
+              )
+            }
+          >
+            {voices.map((voice, index) => (
+              <option key={index} value={voice.name}>
+                {voice.name} ({voice.lang})
+              </option>
+            ))}
+          </select>
 
-      {/* Voice Selection */}
-      <label htmlFor="voiceSelect">Choose Voice:</label>
-      <select
-        id="voiceSelect"
-        value={selectedVoice ? selectedVoice.name : ""}
-        onChange={(e) =>
-          setSelectedVoice(
-            voices.find((voice) => voice.name === e.target.value)
-          )
-        }
-      >
-        {voices.map((voice, index) => (
-          <option key={index} value={voice.name}>
-            {voice.name} ({voice.lang})
-          </option>
-        ))}
-      </select>
-      <br />
+          {/* Reading Speed Control */}
+          <label htmlFor="speedControl" style={{ marginBottom: "8px" }}>
+            Reading Speed: {readingSpeed.toFixed(1)}x
+          </label>
+          <input
+            type="range"
+            id="speedControl"
+            min="0.5"
+            max="2"
+            step="0.1"
+            value={readingSpeed}
+            onChange={(e) => setReadingSpeed(Number(e.target.value))}
+          />
 
-      {/* Control Buttons */}
-      <button onClick={() => startReading()} disabled={isSpeaking || isPaused}>
-        Start Reading
-      </button>
-      <button onClick={pauseReading} disabled={!isSpeaking || isPaused}>
-        Pause
-      </button>
-      <button onClick={resumeReading} disabled={!isPaused}>
-        Resume
-      </button>
-      <button onClick={stopReading}>Stop</button>
+          {/* Control Buttons */}
+          <div className={styles["control-buttons"]}>
+            {/* <button
+              onClick={() => startReading()}
+              disabled={isSpeaking || isPaused}
+            >
+              Start Reading
+            </button> */}
+            <IconButton
+              onClick={() => startReading()}
+              disabled={isSpeaking || isPaused}
+            >
+              <Play color="white" size={16} />
+              Start
+            </IconButton>
+            {/* <button onClick={pauseReading} disabled={!isSpeaking || isPaused}>
+              Pause
+            </button> */}
+            <IconButton
+              onClick={() => pauseReading()}
+              disabled={!isSpeaking || isPaused}
+            >
+              <Pause color="white" size={16} />
+              Pause
+            </IconButton>
+            {/* <button onClick={resumeReading} disabled={!isPaused}>
+              Resume
+            </button> */}
+            <IconButton onClick={() => resumeReading()} disabled={!isPaused}>
+              <Play color="white" size={16} />
+              Resume
+            </IconButton>
+            {/* <button onClick={stopReading}>Stop</button> */}
+            <IconButton onClick={() => stopReading()}>
+              <CircleStop color="white" size={16} />
+              Stop
+            </IconButton>
+          </div>
+        </div>
 
-      {/* Highlighted Text Display */}
-      <div style={{ marginTop: "20px", fontSize: "18px", lineHeight: "1.5" }}>
-        {getHighlightedText()}
+        {/* Highlighted Text Display */}
+        <div className={styles["wrapper"]}>
+          <div className={styles["response-container"]}>
+            {getHighlightedText()}
+          </div>
+        </div>
       </div>
     </div>
   );
