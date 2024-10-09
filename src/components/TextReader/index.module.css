@@ -39,6 +39,12 @@
   font-weight: 600;
 }
 
+.links {
+  gap: 22px;
+  display: flex;
+  align-items: center;
+}
+
 .app-container {
   /* height: 92%; */
   height: auto;

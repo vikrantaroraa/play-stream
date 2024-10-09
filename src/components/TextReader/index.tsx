@@ -3,14 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import styles from "./index.module.css";
 import playStreamLogo from "src/assets/images/play-stream-logo-3.png";
-import {
-  FileText,
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  CircleStop,
-} from "lucide-react";
+import { FileText, Play, Pause, CircleStop, Github } from "lucide-react";
 import IconButton from "src/components/IconButton";
 
 const TextReaderWithMultipleVoices = () => {
@@ -193,7 +186,16 @@ const TextReaderWithMultipleVoices = () => {
           </div>
           <span className={styles["app-name"]}>Play Stream</span>
         </div>
-        {/* <div className={styles["links"]}></div> */}
+        <div className={styles["links"]}>
+          <a
+            href="https://github.com/vikrantaroraa/play-stream"
+            target="_blank"
+            rel="noopener"
+            title="author-github-link"
+          >
+            <Github color="#111827" size={22} />
+          </a>
+        </div>
       </div>
       <div className={styles["app-container"]}>
         <div className={styles["text-input-and-controls-container"]}>
