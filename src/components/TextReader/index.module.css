@@ -46,9 +46,7 @@
 }
 
 .app-container {
-  /* height: 92%; */
   height: auto;
-  /* border: 3px dotted purple; */
   display: flex;
   flex-direction: column;
   padding: 16px;
@@ -57,11 +55,9 @@
 .text-input-and-controls-container {
   width: 100%;
   height: auto;
-  /* border: 2px dotted orangered; */
   display: flex;
   flex-direction: column;
   margin-bottom: 16px;
-  /* gap: 12px; */
 }
 
 .upload-button {

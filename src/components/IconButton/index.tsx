@@ -1,4 +1,4 @@
-import React, { forwardRef, PropsWithChildren, Ref } from "react";
+import { forwardRef, PropsWithChildren, Ref } from "react";
 import styles from "./index.module.css";
 
 type IconButtonProps = {
@@ -17,7 +17,6 @@ const Button = (
       ref={ref}
       disabled={disabled}
     >
-      {/* {icon && <span>{icon}</span>} */}
       {children}
     </button>
   );
