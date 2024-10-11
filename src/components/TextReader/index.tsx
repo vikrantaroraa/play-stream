@@ -10,6 +10,10 @@ const TextReaderWithMultipleVoices = () => {
   const [text, setText] = useState(""); // Text input or from file
   const [words, setWords] = useState([]); // Array of words with positions
   const [currentWordIndex, setCurrentWordIndex] = useState(-1); // Index of the word being highlighted
+  const [currentSentenceRange, setCurrentSentenceRange] = useState({
+    start: -1,
+    end: -1,
+  });
   const [isSpeaking, setIsSpeaking] = useState(false); // Is the app speaking the text
   const [isPaused, setIsPaused] = useState(false); // Is the speech paused
   const [readingSpeed, setReadingSpeed] = useState(1); // Speech speed (default 1x)
@@ -74,12 +78,30 @@ const TextReaderWithMultipleVoices = () => {
     return wordArray;
   };
 
+  const findSentenceRange = (wordIndex, wordArray) => {
+    let start = wordIndex;
+    let end = wordIndex;
+
+    // Find the start of the sentence
+    while (start > 0 && !wordArray[start - 1].word.match(/[.!?]$/)) {
+      start--;
+    }
+
+    // Find the end of the sentence
+    while (end < wordArray.length - 1 && !wordArray[end].word.match(/[.!?]$/)) {
+      end++;
+    }
+
+    return { start, end };
+  };
+
   // Starts reading aloud and highlighting words
   const startReading = (fromIndex = 0) => {
     if (text) {
       const wordArray = splitTextIntoWords(text);
       setWords(wordArray);
       setCurrentWordIndex(fromIndex);
+      setCurrentSentenceRange(findSentenceRange(fromIndex, wordArray));
       setIsSpeaking(true);
       setIsPaused(false);
 
@@ -97,16 +119,16 @@ const TextReaderWithMultipleVoices = () => {
           const currentIndex = wordArray.findIndex(
             (wordObj) => wordObj.start >= charIndex
           );
-          setCurrentWordIndex(
-            currentIndex === -1 ? wordArray.length - 1 : currentIndex
-          );
+          const newWordIndex =
+            currentIndex === -1 ? wordArray.length - 1 : currentIndex;
+          setCurrentWordIndex(newWordIndex);
+          setCurrentSentenceRange(findSentenceRange(newWordIndex, wordArray));
         }
       };
 
       // Stop highlighting when speaking is finished
       utterance.onend = () => {
-        setIsSpeaking(false);
-        setCurrentWordIndex(-1);
+        clearHighlighting();
       };
 
       utteranceRef.current = utterance;
@@ -135,9 +157,7 @@ const TextReaderWithMultipleVoices = () => {
   // Stops the reading and resets everything
   const stopReading = () => {
     speechSynthesisRef.current.cancel(); // Stop the speech synthesis
-    setIsSpeaking(false);
-    setCurrentWordIndex(-1);
-    setIsPaused(false);
+    clearHighlighting();
   };
 
   // Restart speech when reading speed or voice changes
@@ -151,23 +171,96 @@ const TextReaderWithMultipleVoices = () => {
   }, [readingSpeed, selectedVoice]);
 
   // Function to highlight the current word without highlighting the space
+  // const getHighlightedText = () => {
+  //   return words.map((wordObj, index) => (
+  //     <React.Fragment key={index}>
+  //       <span
+  //         style={{
+  //           backgroundColor:
+  //             index === currentWordIndex ? "#b2bdfd" : "transparent",
+  //           padding: "4px", // Add padding to highlighted word
+  //           borderRadius: index === currentWordIndex ? "4px" : "0", // Smooth edges for highlighted word
+  //         }}
+  //       >
+  //         {wordObj.word}
+  //       </span>
+  //       <span> </span>{" "}
+  //       {/* This renders the space after the word without highlight */}
+  //     </React.Fragment>
+  //   ));
+  // };
+
+  // Function to highlight the current word without highlighting the space and also highlight the current sentence
   const getHighlightedText = () => {
-    return words.map((wordObj, index) => (
-      <React.Fragment key={index}>
+    const highlightedText = [];
+    let currentSentence = [];
+
+    words.forEach((wordObj, index) => {
+      const isCurrentSentence =
+        index >= currentSentenceRange.start &&
+        index <= currentSentenceRange.end;
+      const isCurrentWord = index === currentWordIndex;
+
+      const wordSpan = (
         <span
+          key={index}
           style={{
-            backgroundColor:
-              index === currentWordIndex ? "#b2bdfd" : "transparent",
-            padding: "4px", // Add padding to highlighted word
-            borderRadius: index === currentWordIndex ? "4px" : "0", // Smooth edges for highlighted word
+            backgroundColor: isCurrentWord ? "#b4bdfb" : "transparent",
+            padding: "2px 2px",
+            borderRadius: isCurrentWord ? "4px" : "0",
+            display: "inline",
           }}
         >
           {wordObj.word}
         </span>
-        <span> </span>{" "}
-        {/* This renders the space after the word without highlight */}
-      </React.Fragment>
-    ));
+      );
+
+      if (isCurrentSentence && currentSentenceRange.start !== -1) {
+        currentSentence.push(wordSpan);
+        currentSentence.push(" ");
+      } else {
+        if (currentSentence.length > 0) {
+          highlightedText.push(
+            <span
+              key={`sentence-${index}`}
+              style={{
+                backgroundColor: "#e8e5ff",
+                display: "inline",
+                padding: "6px 0",
+                borderRadius: "4px",
+              }}
+            >
+              {currentSentence}
+            </span>
+          );
+          currentSentence = [];
+        }
+        highlightedText.push(wordSpan);
+        highlightedText.push(" ");
+      }
+    });
+
+    if (currentSentence.length > 0) {
+      highlightedText.push(
+        <span
+          key="last-sentence"
+          style={{
+            backgroundColor: "#e8e5ff",
+            display: "inline",
+            padding: "6px 0",
+            borderRadius: "4px",
+          }}
+        >
+          {currentSentence}
+        </span>
+      );
+    }
+
+    return (
+      <div style={{ marginTop: "20px", fontSize: "18px", lineHeight: "2" }}>
+        {highlightedText}
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -176,6 +269,13 @@ const TextReaderWithMultipleVoices = () => {
       speechSynthesisRef.current.cancel(); // Cancel any ongoing speech
     };
   }, []); // Empty dependency array to ensure this runs only when the component is mounted/unmounted
+
+  const clearHighlighting = () => {
+    setIsSpeaking(false);
+    setCurrentWordIndex(-1);
+    setCurrentSentenceRange({ start: -1, end: -1 });
+    setIsPaused(false);
+  };
 
   return (
     <div className={styles["main-container"]}>
