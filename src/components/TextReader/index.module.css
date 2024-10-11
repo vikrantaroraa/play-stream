@@ -60,17 +60,43 @@
   margin-bottom: 16px;
 }
 
-.upload-button {
+.upload-button-and-sentence-highlight-toggle {
+  display: flex;
+  justify-content: space-between;
   margin-bottom: 16px;
 }
 
+.sentence-highlight-toggle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+}
+
+.sentence-highlight-toggle input[type="checkbox"] {
+  accent-color: #111827;
+  cursor: pointer;
+}
+
 textarea {
-  height: 125px;
+  height: 100%;
+  width: 100%;
   border-radius: calc(0.5rem - 2px);
   outline-width: 1px;
   resize: vertical;
   padding: 8px 12px;
+  border: none;
+}
+
+.textarea-wrapper {
+  height: 125px;
+  border: 1px solid #111827;
   margin-bottom: 16px;
+  overflow: hidden;
+  border-radius: 6px;
 }
 
 .select-label {

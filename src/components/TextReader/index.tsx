@@ -19,6 +19,7 @@ const TextReaderWithMultipleVoices = () => {
   const [readingSpeed, setReadingSpeed] = useState(1); // Speech speed (default 1x)
   const [voices, setVoices] = useState([]); // Available voices
   const [selectedVoice, setSelectedVoice] = useState(null); // Selected voice
+  const [highlightSentence, setHighlightSentence] = useState(true); // Is the sentence highlighted
 
   const speechSynthesisRef = useRef(window.speechSynthesis); // Reference to speech synthesis
   const utteranceRef = useRef(null); // Reference to the speech utterance
@@ -215,7 +216,11 @@ const TextReaderWithMultipleVoices = () => {
         </span>
       );
 
-      if (isCurrentSentence && currentSentenceRange.start !== -1) {
+      if (
+        isCurrentSentence &&
+        currentSentenceRange.start !== -1 &&
+        highlightSentence
+      ) {
         currentSentence.push(wordSpan);
         currentSentence.push(" ");
       } else {
@@ -299,30 +304,42 @@ const TextReaderWithMultipleVoices = () => {
       </div>
       <div className={styles["app-container"]}>
         <div className={styles["text-input-and-controls-container"]}>
-          <div className={styles["upload-button"]}>
-            {/* File Upload Input */}
-            <input
-              type="file"
-              accept=".txt"
-              onChange={handleFileUpload}
-              ref={fileInputRef}
-              className={styles["upload-file-input"]}
-            />
-            <IconButton onClick={() => fileInputRef.current.click()}>
-              {/* <FileText className="mr-2 h-4 w-4" /> */}
-              <FileText color="white" size={16} />
-              Upload File
-            </IconButton>
+          <div
+            className={styles["upload-button-and-sentence-highlight-toggle"]}
+          >
+            <div>
+              {/* File Upload Input */}
+              <input
+                type="file"
+                accept=".txt"
+                onChange={handleFileUpload}
+                ref={fileInputRef}
+                className={styles["upload-file-input"]}
+              />
+              <IconButton onClick={() => fileInputRef.current.click()}>
+                {/* <FileText className="mr-2 h-4 w-4" /> */}
+                <FileText color="white" size={16} />
+                Upload File
+              </IconButton>
+            </div>
+            <label className={styles["sentence-highlight-toggle"]}>
+              <input
+                type="checkbox"
+                checked={highlightSentence}
+                onChange={(e) => setHighlightSentence(e.target.checked)}
+              />
+              Highlight Sentences
+            </label>
           </div>
 
           {/* Text Input Area */}
-          <textarea
-            // rows={5}
-            // cols={50}
-            value={text}
-            onChange={handleTextInput}
-            placeholder="Or paste your text here..."
-          />
+          <div className={styles["textarea-wrapper"]}>
+            <textarea
+              value={text}
+              onChange={handleTextInput}
+              placeholder="Or paste your text here..."
+            />
+          </div>
 
           {/* Voice Selection */}
           <label htmlFor="voiceSelect" className={styles["select-label"]}>
