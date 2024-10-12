@@ -79,6 +79,8 @@
 .sentence-highlight-toggle input[type="checkbox"] {
   accent-color: #111827;
   cursor: pointer;
+  height: 14px;
+  width: 14px;
 }
 
 textarea {
