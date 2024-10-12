@@ -35,7 +35,7 @@ const TextReaderWithMultipleVoices = () => {
       setVoices(filteredVoices);
       // Set default voice as the first one
       if (availableVoices.length > 0) {
-        setSelectedVoice(availableVoices[0]);
+        setSelectedVoice(filteredVoices[0]);
       }
     };
 
@@ -50,6 +50,7 @@ const TextReaderWithMultipleVoices = () => {
   // Handles text input
   const handleTextInput = (e) => {
     setText(e.target.value);
+    setWords(splitTextIntoWords(e.target.value));
   };
 
   // Handles file upload
@@ -58,7 +59,9 @@ const TextReaderWithMultipleVoices = () => {
     if (file && file.type === "text/plain") {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setText(e.target.result);
+        const content = e.target.result;
+        setText(content);
+        setWords(splitTextIntoWords(content));
       };
       reader.readAsText(file);
     } else {
@@ -171,30 +174,11 @@ const TextReaderWithMultipleVoices = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readingSpeed, selectedVoice]);
 
-  // Function to highlight the current word without highlighting the space
-  // const getHighlightedText = () => {
-  //   return words.map((wordObj, index) => (
-  //     <React.Fragment key={index}>
-  //       <span
-  //         style={{
-  //           backgroundColor:
-  //             index === currentWordIndex ? "#b2bdfd" : "transparent",
-  //           padding: "4px", // Add padding to highlighted word
-  //           borderRadius: index === currentWordIndex ? "4px" : "0", // Smooth edges for highlighted word
-  //         }}
-  //       >
-  //         {wordObj.word}
-  //       </span>
-  //       <span> </span>{" "}
-  //       {/* This renders the space after the word without highlight */}
-  //     </React.Fragment>
-  //   ));
-  // };
-
   // Function to highlight the current word without highlighting the space and also highlight the current sentence
   const getHighlightedText = () => {
     const highlightedText = [];
     let currentSentence = [];
+    let sentenceIndex = 0;
 
     words.forEach((wordObj, index) => {
       const isCurrentSentence =
@@ -204,10 +188,10 @@ const TextReaderWithMultipleVoices = () => {
 
       const wordSpan = (
         <span
-          key={index}
+          key={`word-${index}`}
           style={{
             backgroundColor: isCurrentWord ? "#b4bdfb" : "transparent",
-            padding: "2px 2px",
+            padding: "2px 4px",
             borderRadius: isCurrentWord ? "4px" : "0",
             display: "inline",
           }}
@@ -216,53 +200,33 @@ const TextReaderWithMultipleVoices = () => {
         </span>
       );
 
-      if (
-        isCurrentSentence &&
-        currentSentenceRange.start !== -1 &&
-        highlightSentence
-      ) {
-        currentSentence.push(wordSpan);
-        currentSentence.push(" ");
-      } else {
-        if (currentSentence.length > 0) {
-          highlightedText.push(
-            <span
-              key={`sentence-${index}`}
-              style={{
-                backgroundColor: "#e8e5ff",
-                display: "inline",
-                padding: "6px 0",
-                borderRadius: "4px",
-              }}
-            >
-              {currentSentence}
-            </span>
-          );
-          currentSentence = [];
-        }
-        highlightedText.push(wordSpan);
-        highlightedText.push(" ");
+      currentSentence.push(wordSpan);
+      currentSentence.push(" ");
+
+      if (wordObj.word.match(/[.!?]$/) || index === words.length - 1) {
+        highlightedText.push(
+          <span
+            key={`sentence-${sentenceIndex}`}
+            style={{
+              backgroundColor:
+                isCurrentSentence && highlightSentence
+                  ? "#e8e5ff"
+                  : "transparent",
+              display: "inline",
+              padding: "6px 4px",
+              borderRadius: "4px",
+            }}
+          >
+            {currentSentence}
+          </span>
+        );
+        currentSentence = [];
+        sentenceIndex++;
       }
     });
 
-    if (currentSentence.length > 0) {
-      highlightedText.push(
-        <span
-          key="last-sentence"
-          style={{
-            backgroundColor: "#e8e5ff",
-            display: "inline",
-            padding: "6px 0",
-            borderRadius: "4px",
-          }}
-        >
-          {currentSentence}
-        </span>
-      );
-    }
-
     return (
-      <div style={{ marginTop: "20px", fontSize: "18px", lineHeight: "2" }}>
+      <div style={{ marginTop: "20px", fontSize: "18px", lineHeight: "1.8" }}>
         {highlightedText}
       </div>
     );
