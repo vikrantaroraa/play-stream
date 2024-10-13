@@ -20,6 +20,8 @@ const TextReaderWithMultipleVoices = () => {
   const [voices, setVoices] = useState([]); // Available voices
   const [selectedVoice, setSelectedVoice] = useState(null); // Selected voice
   const [highlightSentence, setHighlightSentence] = useState(true); // Is the sentence highlighted
+  const [lastSpeed, setLastSpeed] = useState(1);
+  const [lastVoice, setLastVoice] = useState(null);
 
   const speechSynthesisRef = useRef(window.speechSynthesis); // Reference to speech synthesis
   const utteranceRef = useRef(null); // Reference to the speech utterance
@@ -137,6 +139,9 @@ const TextReaderWithMultipleVoices = () => {
 
       utteranceRef.current = utterance;
       speechSynthesisRef.current.speak(utterance);
+
+      setLastSpeed(readingSpeed);
+      setLastVoice(selectedVoice);
     }
   };
 
@@ -149,10 +154,46 @@ const TextReaderWithMultipleVoices = () => {
     }
   };
 
-  // Resumes the speech and word highlighting
+  // Resumes the speech and word highlighting if nothing changes. But, if the user changes either the selected
+  // voice or the reading speed before resuming, then it cancels the current utterance and starts a new one
+  // with the latest changes
   const resumeReading = () => {
     if (isPaused) {
-      speechSynthesisRef.current.resume();
+      if (readingSpeed !== lastSpeed || selectedVoice !== lastVoice) {
+        speechSynthesisRef.current.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(
+          text.slice(words[currentWordIndex].start)
+        );
+        utterance.rate = readingSpeed;
+        utterance.voice = selectedVoice;
+
+        utterance.onboundary = (event) => {
+          if (event.name === "word") {
+            const charIndex = event.charIndex + words[currentWordIndex].start;
+            const currentIndex = words.findIndex(
+              (wordObj) => wordObj.start >= charIndex
+            );
+            const newWordIndex =
+              currentIndex === -1 ? words.length - 1 : currentIndex;
+            setCurrentWordIndex(newWordIndex);
+            setCurrentSentenceRange(findSentenceRange(newWordIndex, words));
+          }
+        };
+
+        utterance.onend = () => {
+          clearHighlighting();
+        };
+
+        utteranceRef.current = utterance;
+        speechSynthesisRef.current.speak(utterance);
+
+        setLastSpeed(readingSpeed);
+        setLastVoice(selectedVoice);
+      } else {
+        speechSynthesisRef.current.resume();
+      }
+
       setIsPaused(false);
       setIsSpeaking(true);
     }
