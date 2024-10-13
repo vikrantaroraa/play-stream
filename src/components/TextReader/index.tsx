@@ -52,7 +52,13 @@ const TextReaderWithMultipleVoices = () => {
   // Handles text input
   const handleTextInput = (e) => {
     setText(e.target.value);
-    setWords(splitTextIntoWords(e.target.value));
+
+    // Commenting next line because we don't want the word array to be calculated until the user clicks on "Start"
+    // button, because if the app is reading and user starts entering text in the middle of speech, then if the
+    // following line is not commented, that newly entered text will start appearing in the highlighted text div
+    // as the user continues to type and will disturb the sentence and word highlight sync.
+
+    // setWords(splitTextIntoWords(e.target.value));
   };
 
   // Handles file upload
@@ -63,7 +69,11 @@ const TextReaderWithMultipleVoices = () => {
       reader.onload = (e) => {
         const content = e.target.result;
         setText(content);
-        setWords(splitTextIntoWords(content));
+
+        // to understand why the following line of code has been commented, please read the comment inside the
+        // "handleTextInput" function
+
+        // setWords(splitTextIntoWords(content));
       };
       reader.readAsText(file);
     } else {
