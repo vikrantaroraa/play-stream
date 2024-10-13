@@ -405,20 +405,34 @@ const TextReaderWithMultipleVoices = () => {
             {/* <button onClick={pauseReading} disabled={!isSpeaking || isPaused}>
               Pause
             </button> */}
-            <IconButton
+            {/* <IconButton
               onClick={() => pauseReading()}
               disabled={!isSpeaking || isPaused}
             >
               <Pause color="white" size={16} />
               Pause
-            </IconButton>
+            </IconButton> */}
             {/* <button onClick={resumeReading} disabled={!isPaused}>
               Resume
             </button> */}
-            <IconButton onClick={() => resumeReading()} disabled={!isPaused}>
+            {/* <IconButton onClick={() => resumeReading()} disabled={!isPaused}>
               <Play color="white" size={16} />
               Resume
+            </IconButton> */}
+
+            <IconButton
+              onClick={isPaused ? resumeReading : pauseReading}
+              disabled={!isSpeaking && !isPaused}
+              style={{ width: "111px" }}
+            >
+              {isPaused ? (
+                <Play color="white" size={16} />
+              ) : (
+                <Pause color="white" size={16} />
+              )}
+              {isPaused ? "Resume" : "Pause"}
             </IconButton>
+
             {/* <button onClick={stopReading}>Stop</button> */}
             <IconButton onClick={() => stopReading()}>
               <CircleStop color="white" size={16} />
