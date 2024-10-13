@@ -10,11 +10,16 @@ const TextReaderWithMultipleVoices = () => {
   const [text, setText] = useState(""); // Text input or from file
   const [words, setWords] = useState([]); // Array of words with positions
   const [currentWordIndex, setCurrentWordIndex] = useState(-1); // Index of the word being highlighted
+  const [currentSentenceRange, setCurrentSentenceRange] = useState({
+    start: -1,
+    end: -1,
+  });
   const [isSpeaking, setIsSpeaking] = useState(false); // Is the app speaking the text
   const [isPaused, setIsPaused] = useState(false); // Is the speech paused
   const [readingSpeed, setReadingSpeed] = useState(1); // Speech speed (default 1x)
   const [voices, setVoices] = useState([]); // Available voices
   const [selectedVoice, setSelectedVoice] = useState(null); // Selected voice
+  const [highlightSentence, setHighlightSentence] = useState(true); // Is the sentence highlighted
 
   const speechSynthesisRef = useRef(window.speechSynthesis); // Reference to speech synthesis
   const utteranceRef = useRef(null); // Reference to the speech utterance
@@ -30,7 +35,7 @@ const TextReaderWithMultipleVoices = () => {
       setVoices(filteredVoices);
       // Set default voice as the first one
       if (availableVoices.length > 0) {
-        setSelectedVoice(availableVoices[0]);
+        setSelectedVoice(filteredVoices[0]);
       }
     };
 
@@ -45,6 +50,7 @@ const TextReaderWithMultipleVoices = () => {
   // Handles text input
   const handleTextInput = (e) => {
     setText(e.target.value);
+    setWords(splitTextIntoWords(e.target.value));
   };
 
   // Handles file upload
@@ -53,7 +59,9 @@ const TextReaderWithMultipleVoices = () => {
     if (file && file.type === "text/plain") {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setText(e.target.result);
+        const content = e.target.result;
+        setText(content);
+        setWords(splitTextIntoWords(content));
       };
       reader.readAsText(file);
     } else {
@@ -74,12 +82,30 @@ const TextReaderWithMultipleVoices = () => {
     return wordArray;
   };
 
+  const findSentenceRange = (wordIndex, wordArray) => {
+    let start = wordIndex;
+    let end = wordIndex;
+
+    // Find the start of the sentence
+    while (start > 0 && !wordArray[start - 1].word.match(/[.!?]$/)) {
+      start--;
+    }
+
+    // Find the end of the sentence
+    while (end < wordArray.length - 1 && !wordArray[end].word.match(/[.!?]$/)) {
+      end++;
+    }
+
+    return { start, end };
+  };
+
   // Starts reading aloud and highlighting words
   const startReading = (fromIndex = 0) => {
     if (text) {
       const wordArray = splitTextIntoWords(text);
       setWords(wordArray);
       setCurrentWordIndex(fromIndex);
+      setCurrentSentenceRange(findSentenceRange(fromIndex, wordArray));
       setIsSpeaking(true);
       setIsPaused(false);
 
@@ -97,16 +123,16 @@ const TextReaderWithMultipleVoices = () => {
           const currentIndex = wordArray.findIndex(
             (wordObj) => wordObj.start >= charIndex
           );
-          setCurrentWordIndex(
-            currentIndex === -1 ? wordArray.length - 1 : currentIndex
-          );
+          const newWordIndex =
+            currentIndex === -1 ? wordArray.length - 1 : currentIndex;
+          setCurrentWordIndex(newWordIndex);
+          setCurrentSentenceRange(findSentenceRange(newWordIndex, wordArray));
         }
       };
 
       // Stop highlighting when speaking is finished
       utterance.onend = () => {
-        setIsSpeaking(false);
-        setCurrentWordIndex(-1);
+        clearHighlighting();
       };
 
       utteranceRef.current = utterance;
@@ -135,9 +161,7 @@ const TextReaderWithMultipleVoices = () => {
   // Stops the reading and resets everything
   const stopReading = () => {
     speechSynthesisRef.current.cancel(); // Stop the speech synthesis
-    setIsSpeaking(false);
-    setCurrentWordIndex(-1);
-    setIsPaused(false);
+    clearHighlighting();
   };
 
   // Restart speech when reading speed or voice changes
@@ -150,24 +174,69 @@ const TextReaderWithMultipleVoices = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readingSpeed, selectedVoice]);
 
-  // Function to highlight the current word without highlighting the space
+  // Function to highlight the current word without highlighting the space and also highlight the current sentence
   const getHighlightedText = () => {
-    return words.map((wordObj, index) => (
-      <React.Fragment key={index}>
+    const highlightedText = [];
+    let currentSentence = [];
+    let sentenceIndex = 0;
+
+    words.forEach((wordObj, index) => {
+      const isCurrentSentence =
+        index >= currentSentenceRange.start &&
+        index <= currentSentenceRange.end;
+      const isCurrentWord = index === currentWordIndex;
+
+      const wordSpan = (
         <span
+          key={`word-${index}`}
           style={{
-            backgroundColor:
-              index === currentWordIndex ? "#b2bdfd" : "transparent",
-            padding: "4px", // Add padding to highlighted word
-            borderRadius: index === currentWordIndex ? "4px" : "0", // Smooth edges for highlighted word
+            backgroundColor: isCurrentWord ? "#b4bdfb" : "transparent",
+            padding: "2px 4px",
+            borderRadius: isCurrentWord ? "4px" : "0",
+            display: "inline",
           }}
         >
           {wordObj.word}
         </span>
-        <span> </span>{" "}
-        {/* This renders the space after the word without highlight */}
-      </React.Fragment>
-    ));
+      );
+
+      currentSentence.push(wordSpan);
+      // Add space after the word, but only include it in the sentence highlight if it's not the last word of the sentence
+      if (index < words.length - 1 && !wordObj.word.match(/[.!?]$/)) {
+        currentSentence.push(" ");
+      }
+
+      if (wordObj.word.match(/[.!?]$/) || index === words.length - 1) {
+        highlightedText.push(
+          <span
+            key={`sentence-${sentenceIndex}`}
+            style={{
+              backgroundColor:
+                isCurrentSentence && highlightSentence
+                  ? "#e8e5ff"
+                  : "transparent",
+              display: "inline",
+              padding: "6px 4px",
+              borderRadius: "4px",
+            }}
+          >
+            {currentSentence}
+          </span>
+        );
+        // Add space after the sentence, outside of the highlighting
+        if (index < words.length - 1) {
+          highlightedText.push(" ");
+        }
+        currentSentence = [];
+        sentenceIndex++;
+      }
+    });
+
+    return (
+      <div style={{ marginTop: "20px", fontSize: "18px", lineHeight: "1.8" }}>
+        {highlightedText}
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -176,6 +245,13 @@ const TextReaderWithMultipleVoices = () => {
       speechSynthesisRef.current.cancel(); // Cancel any ongoing speech
     };
   }, []); // Empty dependency array to ensure this runs only when the component is mounted/unmounted
+
+  const clearHighlighting = () => {
+    setIsSpeaking(false);
+    setCurrentWordIndex(-1);
+    setCurrentSentenceRange({ start: -1, end: -1 });
+    setIsPaused(false);
+  };
 
   return (
     <div className={styles["main-container"]}>
@@ -199,30 +275,42 @@ const TextReaderWithMultipleVoices = () => {
       </div>
       <div className={styles["app-container"]}>
         <div className={styles["text-input-and-controls-container"]}>
-          <div className={styles["upload-button"]}>
-            {/* File Upload Input */}
-            <input
-              type="file"
-              accept=".txt"
-              onChange={handleFileUpload}
-              ref={fileInputRef}
-              className={styles["upload-file-input"]}
-            />
-            <IconButton onClick={() => fileInputRef.current.click()}>
-              {/* <FileText className="mr-2 h-4 w-4" /> */}
-              <FileText color="white" size={16} />
-              Upload File
-            </IconButton>
+          <div
+            className={styles["upload-button-and-sentence-highlight-toggle"]}
+          >
+            <div>
+              {/* File Upload Input */}
+              <input
+                type="file"
+                accept=".txt"
+                onChange={handleFileUpload}
+                ref={fileInputRef}
+                className={styles["upload-file-input"]}
+              />
+              <IconButton onClick={() => fileInputRef.current.click()}>
+                {/* <FileText className="mr-2 h-4 w-4" /> */}
+                <FileText color="white" size={16} />
+                Upload File
+              </IconButton>
+            </div>
+            <label className={styles["sentence-highlight-toggle"]}>
+              <input
+                type="checkbox"
+                checked={highlightSentence}
+                onChange={(e) => setHighlightSentence(e.target.checked)}
+              />
+              Highlight Sentences
+            </label>
           </div>
 
           {/* Text Input Area */}
-          <textarea
-            // rows={5}
-            // cols={50}
-            value={text}
-            onChange={handleTextInput}
-            placeholder="Or paste your text here..."
-          />
+          <div className={styles["textarea-wrapper"]}>
+            <textarea
+              value={text}
+              onChange={handleTextInput}
+              placeholder="Or paste your text here..."
+            />
+          </div>
 
           {/* Voice Selection */}
           <label htmlFor="voiceSelect" className={styles["select-label"]}>
