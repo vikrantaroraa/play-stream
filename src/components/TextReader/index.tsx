@@ -201,7 +201,10 @@ const TextReaderWithMultipleVoices = () => {
       );
 
       currentSentence.push(wordSpan);
-      currentSentence.push(" ");
+      // Add space after the word, but only include it in the sentence highlight if it's not the last word of the sentence
+      if (index < words.length - 1 && !wordObj.word.match(/[.!?]$/)) {
+        currentSentence.push(" ");
+      }
 
       if (wordObj.word.match(/[.!?]$/) || index === words.length - 1) {
         highlightedText.push(
@@ -220,6 +223,10 @@ const TextReaderWithMultipleVoices = () => {
             {currentSentence}
           </span>
         );
+        // Add space after the sentence, outside of the highlighting
+        if (index < words.length - 1) {
+          highlightedText.push(" ");
+        }
         currentSentence = [];
         sentenceIndex++;
       }
