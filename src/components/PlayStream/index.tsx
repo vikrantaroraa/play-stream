@@ -316,7 +316,7 @@ const PlayStream = () => {
     });
 
     return (
-      <div style={{ marginTop: "20px", fontSize: "18px", lineHeight: "1.8" }}>
+      <div style={{ fontSize: "18px", lineHeight: "1.8" }}>
         {highlightedText}
       </div>
     );
