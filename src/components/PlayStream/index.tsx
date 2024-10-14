@@ -46,6 +46,9 @@ const PlayStream = () => {
 
   // Fetch voices once the component mounts
   useEffect(() => {
+    // Cancel any ongoing speech when the page loads or reloads
+    speechSynthesisRef.current.cancel();
+
     const loadVoices = () => {
       const availableVoices = speechSynthesisRef.current.getVoices();
       const filteredVoices = availableVoices.filter(
