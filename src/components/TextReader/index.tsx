@@ -350,7 +350,7 @@ const TextReaderWithMultipleVoices = () => {
             href="https://github.com/vikrantaroraa/play-stream"
             target="_blank"
             rel="noopener"
-            title="author-github-link"
+            title="github-repo-link"
           >
             <Github color="#111827" size={22} />
           </a>
