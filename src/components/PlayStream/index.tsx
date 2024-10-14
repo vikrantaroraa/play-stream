@@ -343,7 +343,7 @@ const PlayStream = () => {
           <div className={styles["logo"]}>
             <img src={playStreamLogo} alt="play-stream-logo" />
           </div>
-          <span className={styles["app-name"]}>Play Stream</span>
+          <span className={styles["app-name"]}>PlayStream</span>
         </div>
         <div className={styles["links"]}>
           <a
