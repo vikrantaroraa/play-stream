@@ -1,10 +1,10 @@
-import TextReaderWithSynchronizedVoice from "src/components/TextReader";
+import PlayStream from "src/components/PlayStream";
 import "./App.css";
 
 function App() {
   return (
     <div>
-      <TextReaderWithSynchronizedVoice />
+      <PlayStream />
     </div>
   );
 }

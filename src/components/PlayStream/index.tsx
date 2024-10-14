@@ -6,7 +6,7 @@ import playStreamLogo from "src/assets/images/play-stream-logo-3.png";
 import { FileText, Play, Pause, CircleStop, Github } from "lucide-react";
 import IconButton from "src/components/IconButton";
 
-const TextReaderWithMultipleVoices = () => {
+const PlayStream = () => {
   const [text, setText] = useState(""); // Text input or from file
   const [words, setWords] = useState([]); // Array of words with positions
   const [currentWordIndex, setCurrentWordIndex] = useState(-1); // Index of the word being highlighted
@@ -494,4 +494,4 @@ const TextReaderWithMultipleVoices = () => {
   );
 };
 
-export default TextReaderWithMultipleVoices;
+export default PlayStream;
