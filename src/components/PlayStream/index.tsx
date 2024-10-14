@@ -46,6 +46,9 @@ const PlayStream = () => {
 
   // Fetch voices once the component mounts
   useEffect(() => {
+    // Cancel any ongoing speech when the page loads or reloads
+    speechSynthesisRef.current.cancel();
+
     const loadVoices = () => {
       const availableVoices = speechSynthesisRef.current.getVoices();
       const filteredVoices = availableVoices.filter(
@@ -343,7 +346,7 @@ const PlayStream = () => {
           <div className={styles["logo"]}>
             <img src={playStreamLogo} alt="play-stream-logo" />
           </div>
-          <span className={styles["app-name"]}>Play Stream</span>
+          <span className={styles["app-name"]}>PlayStream</span>
         </div>
         <div className={styles["links"]}>
           <a
