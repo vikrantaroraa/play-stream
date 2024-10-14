@@ -22,10 +22,27 @@ const TextReaderWithMultipleVoices = () => {
   const [highlightSentence, setHighlightSentence] = useState(true); // Is the sentence highlighted
   const [lastSpeed, setLastSpeed] = useState(1);
   const [lastVoice, setLastVoice] = useState(null);
+  const [isInitialStart, setIsInitialStart] = useState(true);
 
   const speechSynthesisRef = useRef(window.speechSynthesis); // Reference to speech synthesis
   const utteranceRef = useRef(null); // Reference to the speech utterance
   const fileInputRef = useRef(null);
+
+  // Here we are using a ref instead of storing the wordArry directly into an array so that, we can refrence the
+  // same text that was enetered into the textarea before clicking on "Start" button, between all the re-renders
+  // that happens due to a change in voice selection or reading speed. So that we do not reference the text of the textarea
+  // if it was changed in any manner after the speech was started. Otherwise those changes will appear in the "response-container"
+  // in the middle of speech. Using a ref makes surethat we always reference the same wordArray that was in the textarea
+  // before user clicked on "Start" button. This wasy any changes made to text inside textarea are only reflected
+  // when the users re-starts the speech after the current ongoing speech completes itself or if the users stops it.
+
+  const wordArrayRef = useRef([]); // Contains all the words being displayed inside the "response-container"
+
+  // Using textRef for the same reason as described for the "wordArrayRef" above. The only difference is that, while
+  // wordArrayRef stores an array of words and their start positions or start-indexes inside the "text" variable, the textRef
+  // contains reference to all the text inside the "text" variable i.e all the text entered into the textarea
+  // before cliking on the "Start" button.
+  const textRef = useRef(""); // Contains the reference to all the text that was input into the textarea before clicking "Start" button
 
   // Fetch voices once the component mounts
   useEffect(() => {
@@ -114,16 +131,23 @@ const TextReaderWithMultipleVoices = () => {
   // Starts reading aloud and highlighting words
   const startReading = (fromIndex = 0) => {
     if (text) {
-      const wordArray = splitTextIntoWords(text);
-      setWords(wordArray);
+      if (isInitialStart) {
+        wordArrayRef.current = splitTextIntoWords(text);
+        setWords(wordArrayRef.current);
+        setIsInitialStart(false);
+        textRef.current = text;
+      }
+
       setCurrentWordIndex(fromIndex);
-      setCurrentSentenceRange(findSentenceRange(fromIndex, wordArray));
+      setCurrentSentenceRange(
+        findSentenceRange(fromIndex, wordArrayRef.current)
+      );
       setIsSpeaking(true);
       setIsPaused(false);
 
       // Create and configure speech synthesis utterance
       const utterance = new SpeechSynthesisUtterance(
-        text.slice(wordArray[fromIndex].start)
+        textRef.current.slice(wordArrayRef.current[fromIndex].start)
       );
       utterance.rate = readingSpeed; // Set speech rate
       utterance.voice = selectedVoice; // Set selected voice
@@ -131,20 +155,26 @@ const TextReaderWithMultipleVoices = () => {
       // Synchronize the spoken word with the highlighted word
       utterance.onboundary = (event) => {
         if (event.name === "word") {
-          const charIndex = event.charIndex + wordArray[fromIndex].start;
-          const currentIndex = wordArray.findIndex(
+          const charIndex =
+            event.charIndex + wordArrayRef.current[fromIndex].start;
+          const currentIndex = wordArrayRef.current.findIndex(
             (wordObj) => wordObj.start >= charIndex
           );
           const newWordIndex =
-            currentIndex === -1 ? wordArray.length - 1 : currentIndex;
+            currentIndex === -1
+              ? wordArrayRef.current.length - 1
+              : currentIndex;
           setCurrentWordIndex(newWordIndex);
-          setCurrentSentenceRange(findSentenceRange(newWordIndex, wordArray));
+          setCurrentSentenceRange(
+            findSentenceRange(newWordIndex, wordArrayRef.current)
+          );
         }
       };
 
-      // Stop highlighting when speaking is finished
+      // Stop highlighting when speaking is finished and reset isInitialStart
       utterance.onend = () => {
         clearHighlighting();
+        setIsInitialStart(true);
       };
 
       utteranceRef.current = utterance;
@@ -173,7 +203,7 @@ const TextReaderWithMultipleVoices = () => {
         speechSynthesisRef.current.cancel();
 
         const utterance = new SpeechSynthesisUtterance(
-          text.slice(words[currentWordIndex].start)
+          textRef.current.slice(words[currentWordIndex].start)
         );
         utterance.rate = readingSpeed;
         utterance.voice = selectedVoice;
@@ -193,6 +223,7 @@ const TextReaderWithMultipleVoices = () => {
 
         utterance.onend = () => {
           clearHighlighting();
+          setIsInitialStart(true);
         };
 
         utteranceRef.current = utterance;
@@ -213,6 +244,7 @@ const TextReaderWithMultipleVoices = () => {
   const stopReading = () => {
     speechSynthesisRef.current.cancel(); // Stop the speech synthesis
     clearHighlighting();
+    setIsInitialStart(true);
   };
 
   // Restart speech when reading speed or voice changes
@@ -225,7 +257,7 @@ const TextReaderWithMultipleVoices = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readingSpeed, selectedVoice]);
 
-  // Function to highlight the current word without highlighting the space and also highlight the current sentence
+  // Function to highlight the current word and the current sentence
   const getHighlightedText = () => {
     const highlightedText = [];
     let currentSentence = [];
