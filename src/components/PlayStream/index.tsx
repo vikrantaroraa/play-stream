@@ -355,7 +355,7 @@ const PlayStream = () => {
             rel="noopener"
             title="github-repo-link"
           >
-            <Github color="#111827" size={22} />
+            <Github color="#111827" size={26} />
           </a>
         </div>
       </div>
