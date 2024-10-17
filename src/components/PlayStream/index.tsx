@@ -5,9 +5,10 @@ import styles from "./index.module.css";
 import playStreamLogo from "src/assets/images/play-stream-logo-3.png";
 import { FileText, Play, Pause, CircleStop, Github } from "lucide-react";
 import IconButton from "src/components/IconButton";
+import { defaultText } from "src/data/defaultText";
 
 const PlayStream = () => {
-  const [text, setText] = useState(""); // Text input or from file
+  const [text, setText] = useState(defaultText); // Text input or from file
   const [words, setWords] = useState([]); // Array of words with positions
   const [currentWordIndex, setCurrentWordIndex] = useState(-1); // Index of the word being highlighted
   const [currentSentenceRange, setCurrentSentenceRange] = useState({
