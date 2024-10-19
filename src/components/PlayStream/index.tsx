@@ -28,6 +28,7 @@ const PlayStream = () => {
   const speechSynthesisRef = useRef(window.speechSynthesis); // Reference to speech synthesis
   const utteranceRef = useRef(null); // Reference to the speech utterance
   const fileInputRef = useRef(null);
+  const currentWordIndexRef = useRef(currentWordIndex); // Add ref to track the current word index
 
   // Here we are using a ref instead of storing the wordArry directly into an array so that, we can refrence the
   // same text that was enetered into the textarea before clicking on "Start" button, between all the re-renders
@@ -69,6 +70,11 @@ const PlayStream = () => {
       speechSynthesisRef.current.onvoiceschanged = loadVoices;
     }
   }, []);
+
+  // Sync currentWordIndexRef with currentWordIndex state
+  useEffect(() => {
+    currentWordIndexRef.current = currentWordIndex;
+  }, [currentWordIndex]); // This keeps the ref up to date with the state
 
   // Handles text input
   const handleTextInput = (e) => {
@@ -177,8 +183,30 @@ const PlayStream = () => {
 
       // Stop highlighting when speaking is finished and reset isInitialStart
       utterance.onend = () => {
-        clearHighlighting();
-        setIsInitialStart(true);
+        // Check if the browser is Firefox
+        // console.log(
+        //   "currentWordIndexRef.current :",
+        //   currentWordIndexRef.current
+        // );
+        // console.log(
+        //   "wordArrayRef.current.length - 1 :",
+        //   wordArrayRef.current.length - 1
+        // );
+        if (navigator.userAgent.toLowerCase().includes("firefox")) {
+          // Check if the last spoken word is the last word of the text
+          if (
+            currentWordIndexRef.current === wordArrayRef.current.length - 1 ||
+            (!speechSynthesis.speaking && isLastSpokenWord())
+          ) {
+            clearHighlighting();
+            setIsInitialStart(true);
+          } else {
+            return; // Do nothing if it is not the last word
+          }
+        } else {
+          clearHighlighting();
+          setIsInitialStart(true);
+        }
       };
 
       utteranceRef.current = utterance;
@@ -226,8 +254,22 @@ const PlayStream = () => {
         };
 
         utterance.onend = () => {
-          clearHighlighting();
-          setIsInitialStart(true);
+          // Check if the browser is Firefox
+          if (navigator.userAgent.toLowerCase().includes("firefox")) {
+            // Check if the last spoken word is the last word of the text
+            if (
+              currentWordIndexRef.current === wordArrayRef.current.length - 1 ||
+              (!speechSynthesis.speaking && isLastSpokenWord())
+            ) {
+              clearHighlighting();
+              setIsInitialStart(true);
+            } else {
+              return; // Do nothing if it is not the last word
+            }
+          } else {
+            clearHighlighting();
+            setIsInitialStart(true);
+          }
         };
 
         utteranceRef.current = utterance;
@@ -338,6 +380,37 @@ const PlayStream = () => {
     setCurrentWordIndex(-1);
     setCurrentSentenceRange({ start: -1, end: -1 });
     setIsPaused(false);
+  };
+
+  const isLastSpokenWord = () => {
+    // Regular expression to remove trailing punctuation and symbols
+    const sanitizeWord = (word) =>
+      word.replace(/[.,!?(){}[\]'"`<>-]+$/g, "").trim();
+
+    // Sanitize the last word in the array
+    const lastWordCleaned = sanitizeWord(
+      wordArrayRef.current[wordArrayRef.current.length - 1].word
+    );
+
+    // Sanitize the current word
+    const currentWordCleaned = sanitizeWord(
+      wordArrayRef.current[currentWordIndexRef.current].word
+    );
+
+    // console.log("lastWordCleaned: ", lastWordCleaned);
+    // console.log("currentWordCleaned: ", currentWordCleaned);
+
+    // If the cleaned last word is an empty string, use the second-to-last meaningful word
+    if (lastWordCleaned === "") {
+      const secondToLastWord = sanitizeWord(
+        wordArrayRef.current[wordArrayRef.current.length - 2].word
+      );
+      // console.log("secondToLastWord: ", secondToLastWord);
+      return currentWordCleaned === secondToLastWord;
+    }
+
+    // Compare the sanitized versions of the current word and the last word
+    return currentWordCleaned === lastWordCleaned;
   };
 
   return (
