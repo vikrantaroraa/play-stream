@@ -184,14 +184,6 @@ const PlayStream = () => {
       // Stop highlighting when speaking is finished and reset isInitialStart
       utterance.onend = () => {
         // Check if the browser is Firefox
-        // console.log(
-        //   "currentWordIndexRef.current :",
-        //   currentWordIndexRef.current
-        // );
-        // console.log(
-        //   "wordArrayRef.current.length - 1 :",
-        //   wordArrayRef.current.length - 1
-        // );
         if (navigator.userAgent.toLowerCase().includes("firefox")) {
           // Check if the last spoken word is the last word of the text
           if (
@@ -397,15 +389,11 @@ const PlayStream = () => {
       wordArrayRef.current[currentWordIndexRef.current].word
     );
 
-    // console.log("lastWordCleaned: ", lastWordCleaned);
-    // console.log("currentWordCleaned: ", currentWordCleaned);
-
     // If the cleaned last word is an empty string, use the second-to-last meaningful word
     if (lastWordCleaned === "") {
       const secondToLastWord = sanitizeWord(
         wordArrayRef.current[wordArrayRef.current.length - 2].word
       );
-      // console.log("secondToLastWord: ", secondToLastWord);
       return currentWordCleaned === secondToLastWord;
     }
 
