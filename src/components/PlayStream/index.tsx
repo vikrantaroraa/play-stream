@@ -29,6 +29,7 @@ const PlayStream = () => {
   const utteranceRef = useRef(null); // Reference to the speech utterance
   const fileInputRef = useRef(null);
   const currentWordIndexRef = useRef(currentWordIndex); // Add ref to track the current word index
+  const isSpeechTerminatedIntentionallyRef = useRef(false);
 
   // Here we are using a ref instead of storing the wordArry directly into an array so that, we can refrence the
   // same text that was enetered into the textarea before clicking on "Start" button, between all the re-renders
@@ -183,6 +184,17 @@ const PlayStream = () => {
 
       // Stop highlighting when speaking is finished and reset isInitialStart
       utterance.onend = () => {
+        // Check if speech was terminated intentionally
+        if (isSpeechTerminatedIntentionallyRef.current) {
+          // Handle the intentional stop
+          clearHighlighting();
+          setIsInitialStart(true);
+
+          // Reset the flag after handling the stop
+          isSpeechTerminatedIntentionallyRef.current = false;
+          return;
+        }
+
         // Check if the browser is Firefox
         if (navigator.userAgent.toLowerCase().includes("firefox")) {
           // Check if the last spoken word is the last word of the text
@@ -246,6 +258,17 @@ const PlayStream = () => {
         };
 
         utterance.onend = () => {
+          // Check if speech was terminated intentionally
+          if (isSpeechTerminatedIntentionallyRef.current) {
+            // Handle the intentional stop
+            clearHighlighting();
+            setIsInitialStart(true);
+
+            // Reset the flag after handling the stop
+            isSpeechTerminatedIntentionallyRef.current = false;
+            return;
+          }
+
           // Check if the browser is Firefox
           if (navigator.userAgent.toLowerCase().includes("firefox")) {
             // Check if the last spoken word is the last word of the text
@@ -280,6 +303,7 @@ const PlayStream = () => {
 
   // Stops the reading and resets everything
   const stopReading = () => {
+    isSpeechTerminatedIntentionallyRef.current = true;
     speechSynthesisRef.current.cancel(); // Stop the speech synthesis
     clearHighlighting();
     setIsInitialStart(true);
@@ -374,46 +398,6 @@ const PlayStream = () => {
     setIsPaused(false);
   };
 
-  // const isLastSpokenWord = () => {
-  //   const currentWordIndex = currentWordIndexRef.current;
-  //   const lastWordIndex = wordArrayRef.current.length - 1;
-  //   const secondToLastWordIndex = wordArrayRef.current.length - 2;
-
-  //   // Regular expression to remove trailing punctuation and symbols
-  //   const sanitizeWord = (word) =>
-  //     word.replace(/[.,!?(){}[\]'"`<>-]+$/g, "").trim();
-
-  //   // Sanitize the last word in the array
-  //   const lastWordCleaned = sanitizeWord(
-  //     wordArrayRef.current[lastWordIndex].word
-  //   );
-
-  //   // Sanitize the current word
-  //   const currentWordCleaned = sanitizeWord(
-  //     wordArrayRef.current[currentWordIndex].word
-  //   );
-
-  //   // In the below return statements we are also checking for the indexes along with words because the last
-  //   // word of entered text can also appear anywhere else in the text before the end as well.
-
-  //   // If the cleaned last word is an empty string, use the second-to-last meaningful word
-  //   if (lastWordCleaned === "") {
-  //     const secondToLastWord = sanitizeWord(
-  //       wordArrayRef.current[secondToLastWordIndex].word
-  //     );
-  //     return (
-  //       currentWordCleaned === secondToLastWord &&
-  //       currentWordIndex === secondToLastWordIndex
-  //     );
-  //   }
-
-  //   // Compare the sanitized versions of the current word and the last word
-  //   return (
-  //     currentWordCleaned === lastWordCleaned &&
-  //     currentWordIndex === lastWordIndex
-  //   );
-  // };
-
   const isLastSpokenWord = () => {
     const currentWordIndex = currentWordIndexRef.current;
     const wordArray = wordArrayRef.current;
@@ -425,7 +409,8 @@ const PlayStream = () => {
     // Sanitize the current word
     const currentWordCleaned = sanitizeWord(wordArray[currentWordIndex].word);
 
-    console.log("current-Word-Cleaned :", currentWordCleaned);
+    // In the below return statement we are also checking for the indexes along with words because the last
+    // word of entered text can also appear anywhere else in the text before the end as well.
 
     // Loop through the word array from the last word backwards
     for (let i = wordArray.length - 1; i >= 0; i--) {
@@ -433,7 +418,6 @@ const PlayStream = () => {
 
       // If we find a non-empty word, compare it with the current word and check the index
       if (cleanedWord !== "") {
-        console.log("found meaningful word:", cleanedWord, "at index:", i);
         return currentWordCleaned === cleanedWord && currentWordIndex === i;
       }
     }
