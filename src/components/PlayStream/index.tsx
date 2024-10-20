@@ -374,31 +374,72 @@ const PlayStream = () => {
     setIsPaused(false);
   };
 
+  // const isLastSpokenWord = () => {
+  //   const currentWordIndex = currentWordIndexRef.current;
+  //   const lastWordIndex = wordArrayRef.current.length - 1;
+  //   const secondToLastWordIndex = wordArrayRef.current.length - 2;
+
+  //   // Regular expression to remove trailing punctuation and symbols
+  //   const sanitizeWord = (word) =>
+  //     word.replace(/[.,!?(){}[\]'"`<>-]+$/g, "").trim();
+
+  //   // Sanitize the last word in the array
+  //   const lastWordCleaned = sanitizeWord(
+  //     wordArrayRef.current[lastWordIndex].word
+  //   );
+
+  //   // Sanitize the current word
+  //   const currentWordCleaned = sanitizeWord(
+  //     wordArrayRef.current[currentWordIndex].word
+  //   );
+
+  //   // In the below return statements we are also checking for the indexes along with words because the last
+  //   // word of entered text can also appear anywhere else in the text before the end as well.
+
+  //   // If the cleaned last word is an empty string, use the second-to-last meaningful word
+  //   if (lastWordCleaned === "") {
+  //     const secondToLastWord = sanitizeWord(
+  //       wordArrayRef.current[secondToLastWordIndex].word
+  //     );
+  //     return (
+  //       currentWordCleaned === secondToLastWord &&
+  //       currentWordIndex === secondToLastWordIndex
+  //     );
+  //   }
+
+  //   // Compare the sanitized versions of the current word and the last word
+  //   return (
+  //     currentWordCleaned === lastWordCleaned &&
+  //     currentWordIndex === lastWordIndex
+  //   );
+  // };
+
   const isLastSpokenWord = () => {
+    const currentWordIndex = currentWordIndexRef.current;
+    const wordArray = wordArrayRef.current;
+
     // Regular expression to remove trailing punctuation and symbols
     const sanitizeWord = (word) =>
       word.replace(/[.,!?(){}[\]'"`<>-]+$/g, "").trim();
 
-    // Sanitize the last word in the array
-    const lastWordCleaned = sanitizeWord(
-      wordArrayRef.current[wordArrayRef.current.length - 1].word
-    );
-
     // Sanitize the current word
-    const currentWordCleaned = sanitizeWord(
-      wordArrayRef.current[currentWordIndexRef.current].word
-    );
+    const currentWordCleaned = sanitizeWord(wordArray[currentWordIndex].word);
 
-    // If the cleaned last word is an empty string, use the second-to-last meaningful word
-    if (lastWordCleaned === "") {
-      const secondToLastWord = sanitizeWord(
-        wordArrayRef.current[wordArrayRef.current.length - 2].word
-      );
-      return currentWordCleaned === secondToLastWord;
+    console.log("current-Word-Cleaned :", currentWordCleaned);
+
+    // Loop through the word array from the last word backwards
+    for (let i = wordArray.length - 1; i >= 0; i--) {
+      const cleanedWord = sanitizeWord(wordArray[i].word);
+
+      // If we find a non-empty word, compare it with the current word and check the index
+      if (cleanedWord !== "") {
+        console.log("found meaningful word:", cleanedWord, "at index:", i);
+        return currentWordCleaned === cleanedWord && currentWordIndex === i;
+      }
     }
 
-    // Compare the sanitized versions of the current word and the last word
-    return currentWordCleaned === lastWordCleaned;
+    // If no non-empty word is found, return false
+    return false;
   };
 
   return (
