@@ -28,6 +28,8 @@ const PlayStream = () => {
   const speechSynthesisRef = useRef(window.speechSynthesis); // Reference to speech synthesis
   const utteranceRef = useRef(null); // Reference to the speech utterance
   const fileInputRef = useRef(null);
+  const currentWordIndexRef = useRef(currentWordIndex); // Add ref to track the current word index
+  const isSpeechTerminatedIntentionallyRef = useRef(false);
 
   // Here we are using a ref instead of storing the wordArry directly into an array so that, we can refrence the
   // same text that was enetered into the textarea before clicking on "Start" button, between all the re-renders
@@ -69,6 +71,11 @@ const PlayStream = () => {
       speechSynthesisRef.current.onvoiceschanged = loadVoices;
     }
   }, []);
+
+  // Sync currentWordIndexRef with currentWordIndex state
+  useEffect(() => {
+    currentWordIndexRef.current = currentWordIndex;
+  }, [currentWordIndex]); // This keeps the ref up to date with the state
 
   // Handles text input
   const handleTextInput = (e) => {
@@ -177,8 +184,33 @@ const PlayStream = () => {
 
       // Stop highlighting when speaking is finished and reset isInitialStart
       utterance.onend = () => {
-        clearHighlighting();
-        setIsInitialStart(true);
+        // Check if speech was terminated intentionally
+        if (isSpeechTerminatedIntentionallyRef.current) {
+          // Handle the intentional stop
+          clearHighlighting();
+          setIsInitialStart(true);
+
+          // Reset the flag after handling the stop
+          isSpeechTerminatedIntentionallyRef.current = false;
+          return;
+        }
+
+        // Check if the browser is Firefox
+        if (navigator.userAgent.toLowerCase().includes("firefox")) {
+          // Check if the last spoken word is the last word of the text
+          if (
+            currentWordIndexRef.current === wordArrayRef.current.length - 1 ||
+            (!speechSynthesis.speaking && isLastSpokenWord())
+          ) {
+            clearHighlighting();
+            setIsInitialStart(true);
+          } else {
+            return; // Do nothing if it is not the last word
+          }
+        } else {
+          clearHighlighting();
+          setIsInitialStart(true);
+        }
       };
 
       utteranceRef.current = utterance;
@@ -226,8 +258,33 @@ const PlayStream = () => {
         };
 
         utterance.onend = () => {
-          clearHighlighting();
-          setIsInitialStart(true);
+          // Check if speech was terminated intentionally
+          if (isSpeechTerminatedIntentionallyRef.current) {
+            // Handle the intentional stop
+            clearHighlighting();
+            setIsInitialStart(true);
+
+            // Reset the flag after handling the stop
+            isSpeechTerminatedIntentionallyRef.current = false;
+            return;
+          }
+
+          // Check if the browser is Firefox
+          if (navigator.userAgent.toLowerCase().includes("firefox")) {
+            // Check if the last spoken word is the last word of the text
+            if (
+              currentWordIndexRef.current === wordArrayRef.current.length - 1 ||
+              (!speechSynthesis.speaking && isLastSpokenWord())
+            ) {
+              clearHighlighting();
+              setIsInitialStart(true);
+            } else {
+              return; // Do nothing if it is not the last word
+            }
+          } else {
+            clearHighlighting();
+            setIsInitialStart(true);
+          }
         };
 
         utteranceRef.current = utterance;
@@ -246,6 +303,7 @@ const PlayStream = () => {
 
   // Stops the reading and resets everything
   const stopReading = () => {
+    isSpeechTerminatedIntentionallyRef.current = true;
     speechSynthesisRef.current.cancel(); // Stop the speech synthesis
     clearHighlighting();
     setIsInitialStart(true);
@@ -338,6 +396,34 @@ const PlayStream = () => {
     setCurrentWordIndex(-1);
     setCurrentSentenceRange({ start: -1, end: -1 });
     setIsPaused(false);
+  };
+
+  const isLastSpokenWord = () => {
+    const currentWordIndex = currentWordIndexRef.current;
+    const wordArray = wordArrayRef.current;
+
+    // Regular expression to remove trailing punctuation and symbols
+    const sanitizeWord = (word) =>
+      word.replace(/[.,!?(){}[\]'"`<>-]+$/g, "").trim();
+
+    // Sanitize the current word
+    const currentWordCleaned = sanitizeWord(wordArray[currentWordIndex].word);
+
+    // In the below return statement we are also checking for the indexes along with words because the last
+    // word of entered text can also appear anywhere else in the text before the end as well.
+
+    // Loop through the word array from the last word backwards
+    for (let i = wordArray.length - 1; i >= 0; i--) {
+      const cleanedWord = sanitizeWord(wordArray[i].word);
+
+      // If we find a non-empty word, compare it with the current word and check the index
+      if (cleanedWord !== "") {
+        return currentWordCleaned === cleanedWord && currentWordIndex === i;
+      }
+    }
+
+    // If no non-empty word is found, return false
+    return false;
   };
 
   return (
