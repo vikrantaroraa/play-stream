@@ -13,7 +13,7 @@
 - **Playback Controls**: Users can pause, resume, or stop speech synthesis at any point without losing their place in the text.
 - **Continuous Playback**: Ensures a seamless reading experience by keeping the current word and sentence in sync, even when changing voices or speed.
 - **Smart Text Processing**: Efficiently splits text into words and sentences for accurate synchronization between spoken and highlighted content.
-- **Cross-Browser Compatibility**: Designed to work smoothly across modern browsers with support for `speechSynthesis` API.
+- **Cross-Browser Compatibility**: Designed to work smoothly across all modern browsers with support for `speechSynthesis` API.
 
 ## 📦 Prerequisites
 
